@@ -23,18 +23,31 @@ states = map_data("state")
 
 ### SUBSET and RECODE ###
 
-bills = bills[bills$Year!=2014, ]
+#exclude 2014 data
+#bills = bills[bills$Year!=2014, ]
 
+#census region and division; https://www2.census.gov/geo/docs/maps-data/maps/reg_div.txt
 bills$Region = ifelse(bills$State=="CT" | bills$State=="ME" | bills$State=="MA" | bills$State=="NH" | bills$State=="RI" | bills$State=="VT" | bills$State=="NJ" | bills$State=="NY" | bills$State=="PA", "Northeast", NA)
 bills$Region = ifelse(bills$State=="IL" | bills$State=="IN" | bills$State=="MI" | bills$State=="OH" | bills$State=="WI" | bills$State=="IA" | bills$State=="KS" | bills$State=="MN" | bills$State=="MO" | bills$State=="NE" | bills$State=="ND" | bills$State=="SD", "Midwest", bills$Region)
 bills$Region = ifelse(bills$State=="DE" | bills$State=="FL" | bills$State=="GA" | bills$State=="MD" | bills$State=="NC" | bills$State=="SC" | bills$State=="VA" | bills$State=="DC" | bills$State=="WV" | bills$State=="AL" | bills$State=="KY" | bills$State=="MS" | bills$State=="TN" | bills$State=="AR" | bills$State=="LA" | bills$State=="OK" | bills$State=="TX", "South", bills$Region)
 bills$Region = ifelse(bills$State=="AZ" | bills$State=="CO" | bills$State=="ID" | bills$State=="MT" | bills$State=="NV" | bills$State=="NM" | bills$State=="UT" | bills$State=="WY" | bills$State=="AK" | bills$State=="CA" | bills$State=="HI" | bills$State=="OR" | bills$State=="WA", "West", bills$Region)
 bills$Region = as.factor(bills$Region)
 
+bills$Division = ifelse(bills$State=="CT" | bills$State=="ME" | bills$State=="MA" | bills$State=="NH" | bills$State=="RI" | bills$State=="VT" , "New England", NA)
+bills$Division = ifelse(bills$State=="NJ" | bills$State=="NY" | bills$State=="PA", "Middle Atlantic", bills$Division)
+bills$Division = ifelse(bills$State=="IL" | bills$State=="IN" | bills$State=="MI" | bills$State=="OH" | bills$State=="WI" , "East North Central", bills$Division)
+bills$Division = ifelse(bills$State=="IA" | bills$State=="KS" | bills$State=="MN" | bills$State=="MO" | bills$State=="NE" | bills$State=="ND" | bills$State=="SD", "West North Central", bills$Division)
+bills$Division = ifelse(bills$State=="DE" | bills$State=="FL" | bills$State=="GA" | bills$State=="MD" | bills$State=="NC" | bills$State=="SC" | bills$State=="VA" | bills$State=="DC" | bills$State=="WV", "South Atlantic", bills$Division)
+bills$Division = ifelse(bills$State=="AL" | bills$State=="KY" | bills$State=="MS" | bills$State=="TN", "East South Central", bills$Division)
+bills$Division = ifelse(bills$State=="AR" | bills$State=="LA" | bills$State=="OK" | bills$State=="TX", "West South Central", bills$Division)
+bills$Division = ifelse(bills$State=="AZ" | bills$State=="CO" | bills$State=="ID" | bills$State=="MT" | bills$State=="NV" | bills$State=="NM" | bills$State=="UT" | bills$State=="WY", "Mountain", bills$Division)
+bills$Division = ifelse(bills$State=="AK" | bills$State=="CA" | bills$State=="HI" | bills$State=="OR" | bills$State=="WA", "Pacific", bills$Division)
+bills$Division = as.factor(bills$Division)
+
 #outcomes
 bills$Assessment_pro = ifelse(bills$Assessment=="Pro", 1, 0)
 bills$Assessment_anti = ifelse(bills$Assessment=="Anti", 1, 0)
-bills$Assessment_neutral = ifelse(bills$Assessment=="Neutral", 1, 0)
+#bills$Assessment_neutral = ifelse(bills$Assessment=="Neutral", 1, 0)
 bills$Law = ifelse(bills$Law=="Yes", 1, 0)
 
 #trim DC to obtain lower 48 states
@@ -44,7 +57,16 @@ states = states[states$region!="district of columbia",]
 ### DESCRIPTIVES ###
 
 CrossTable(bills$State)
+
+#supplementary table
+table(bills$State, bills$Year)
 state.abb[!state.abb %in% unique(bills$State)]
+tmp = subset(bills,bills$Assessment=="Anti")
+table(c(tmp$State,state.abb[!state.abb %in% unique(tmp$State)]), c(tmp$Year,rep(2018,length(state.abb[!state.abb %in% unique(tmp$State)]))))
+tmp = subset(bills,bills$Assessment=="Pro")
+table(c(tmp$State,state.abb[!state.abb %in% unique(tmp$State)]), c(tmp$Year,rep(2018,length(state.abb[!state.abb %in% unique(tmp$State)]))))
+rm(tmp)
+
 CrossTable(bills$Law)
 CrossTable(bills$Assessment)
 table(bills$Thematic_analysis)
@@ -54,38 +76,41 @@ CrossTable(bills$Assessment)
 CrossTable(bills$Law)
 CrossTable(bills$Legislature)
 CrossTable(bills$Legislative_majority)
+CrossTable(bills$Sponsor_party)
 CrossTable(bills$Governor_party)
-CrossTable(bills$Governor_gender)
+#CrossTable(bills$Governor_gender)
 describe(bills$Population_2017); IQR(bills$Population_2017)
 CrossTable(bills$Region)
 
 CrossTable(bills$Law, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
 CrossTable(bills$Legislature, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
 CrossTable(bills$Legislative_majority, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
+CrossTable(bills$Sponsor_party, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
 CrossTable(bills$Governor_party, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
-CrossTable(bills$Governor_gender, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
+#CrossTable(bills$Governor_gender, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
 describeBy(bills$Population_2017, bills$Assessment)
 IQR(bills$Population_2017[bills$Assessment=="Anti"])
 IQR(bills$Population_2017[bills$Assessment=="Pro"])
-IQR(bills$Population_2017[bills$Assessment=="Neutral"])
-summary(aov(bills$Population_2017 ~ bills$Assessment))
+#IQR(bills$Population_2017[bills$Assessment=="Neutral"])
+wilcox.test(bills$Population_2017 ~ bills$Assessment)
 CrossTable(bills$Region, bills$Assessment, prop.r=F, prop.t=F, prop.chisq=F, chisq=T)
+
+CrossTable(bills$Assessment[bills$Law==1])
 
 
 ### LONGITUDINAL PLOT ###
 
 #tiff("Figure 1.tif",height=6,width=10,units='in',res=1200) 
 plot(table(bills$Year), type="l", lwd=4, xlab="Year", ylab="No. of Proposed Bills")
-lines(x=c(2011:2013,2015:2017), y=table(bills$Assessment, bills$Year)["Pro",], lty=1, lwd=1)
-lines(x=c(2011:2013,2015:2017), y=table(bills$Assessment, bills$Year)["Anti",], lty=2, lwd=2)
-lines(x=c(2011:2013,2015:2017), y=table(bills$Assessment, bills$Year)["Neutral",], lty=3, lwd=2)
-legend("topleft", lty=c(1,1,2,3), lwd=c(4,1,2,2), c("Total","Pro","Anti","Neutral"), cex=0.7)
+lines(x=c(2011:2017), y=table(bills$Assessment, bills$Year)["Pro",], lty=1, lwd=1)
+lines(x=c(2011:2017), y=table(bills$Assessment, bills$Year)["Anti",], lty=2, lwd=2)
+legend("topleft", lty=c(1,1,2), lwd=c(4,1,2), c("Total","Pro","Anti"), cex=1)
+#lines(x=c(2011:2013,2015:2017), y=table(bills$Assessment, bills$Year)["Neutral",], lty=3, lwd=2)
+#legend("topleft", lty=c(1,1,2,3), lwd=c(4,1,2,2), c("Total","Pro","Anti","Neutral"), cex=0.7)
 #dev.off() 
 
-### MODELS ###
-
 #trends
-yrs = c(2011:2013,2015:2017)
+yrs = c(2011:2017)
 bls = table(bills$Year)
 summary(lm(bls ~ yrs))
 
@@ -96,13 +121,16 @@ bls = table(bills$Year[bills$Assessment=="Pro"])
 bls = c(0, bls)
 summary(lm(bls ~ yrs))
 
-bls = c(0,table(bills$Year[bills$Assessment=="Neutral"]))
-summary(lm(bls ~ yrs))
+#bls = c(0,table(bills$Year[bills$Assessment=="Neutral"]))
+#summary(lm(bls ~ yrs))
+
+
+### MODELS ###
 
 #predictors
-model = bglmer(Assessment_anti ~ (1 | State) + scale(Year) + as.factor(Law) + as.factor(Legislature) + as.factor(Legislative_majority) + as.factor(Governor_party) + as.factor(Governor_gender) + scale(Population_2017) + relevel(Region, ref="South"), family=binomial(), data=bills, control=glmerControl(optimizer="bobyqa"), fixef.prior=normal) 
-model = bglmer(Assessment_pro ~ (1 | State) + scale(Year) + as.factor(Law) + as.factor(Legislature) + as.factor(Legislative_majority) + as.factor(Governor_party) + as.factor(Governor_gender) + scale(Population_2017) + relevel(Region, ref="South"), family=binomial(), data=bills, control=glmerControl(optimizer="bobyqa"), fixef.prior=normal) 
-model = bglmer(Assessment_neutral ~ (1 | State) + scale(Year) + as.factor(Law) + as.factor(Legislature) + as.factor(Legislative_majority) + as.factor(Governor_party) + as.factor(Governor_gender) + scale(Population_2017) + relevel(Region, ref="South"), family=binomial(), data=bills, control=glmerControl(optimizer="bobyqa"), fixef.prior=normal) 
+model = bglmer(Assessment_anti ~ (1 | State) + as.factor(Law) + scale(Year) + as.factor(Legislature) + as.factor(Legislative_majority) + as.factor(Sponsor_party) + as.factor(Governor_party) + scale(Population_2017) + relevel(Region, ref="South"), family=binomial(), data=bills, control=glmerControl(optimizer="bobyqa"), fixef.prior=normal) 
+model = bglmer(Assessment_pro ~ (1 | State) + as.factor(Law) + scale(Year) + as.factor(Legislature) + as.factor(Legislative_majority) + as.factor(Sponsor_party) + as.factor(Governor_party) + scale(Population_2017) + relevel(Region, ref="South"), family=binomial(), data=bills, control=glmerControl(optimizer="bobyqa"), fixef.prior=normal) 
+model = bglmer(Law ~ (1 | State) + as.factor(Assessment) + scale(Year) + as.factor(Legislature) + as.factor(Legislative_majority) + as.factor(Sponsor_party) + as.factor(Governor_party) + scale(Population_2017) + relevel(Region, ref="South"), family=binomial(), data=bills, control=glmerControl(optimizer="bobyqa"), fixef.prior=normal) 
 
 summary(model)
 round(exp(fixef(model)),2)
@@ -127,16 +155,16 @@ for (i in 1:length(state_index))
 }
 
 #total bills choropleth map
-#tiff("Figure 2a.tif",height=6,width=10,units='in',res=1200) 
+#tiff("Figure 2.tif",height=6,width=10,units='in',res=1200) 
 ggplot() + geom_polygon(data=states, aes(x=long, y=lat, group=group, fill=states$total),colour="white") + scale_fill_continuous(low = "gray95", high = "gray10", guide="colorbar") + theme_bw() + labs(fill="No. bills" ,title = "", x="", y="") + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border=element_blank(), legend.position=c(0.9,0.25)) + coord_map() + theme(legend.text=element_text(colour="black", size=10, face="bold")) + theme(plot.margin=unit(c(0,0,0,0), "cm"))
 #dev.off()
 
 #anti-vaccination choropleth map
-#tiff("Figure 2b.tif",height=6,width=10,units='in',res=1200) 
+#tiff("Supplementary Figure 1.tif",height=6,width=10,units='in',res=1200) 
 ggplot() + geom_polygon(data=states, aes(x=long, y=lat, group=group, fill=states$total_anti),colour="white") + scale_fill_continuous(low = "gray95", high = "gray10", guide="colorbar") + theme_bw() + labs(fill="No. bills" ,title = "", x="", y="") + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border=element_blank(), legend.position=c(0.9,0.25)) + coord_map() + theme(legend.text=element_text(colour="black", size=10, face="bold")) + theme(plot.margin=unit(c(0,0,0,0), "cm"))
 #dev.off()
 
 #pro-vaccination choropleth map
-#tiff("Figure 2c.tif",height=6,width=10,units='in',res=1200) 
+#tiff("Supplementary Figure 2.tif",height=6,width=10,units='in',res=1200) 
 ggplot() + geom_polygon(data=states, aes(x=long, y=lat, group=group, fill=states$total_pro),colour="white") + scale_fill_continuous(low = "gray95", high = "gray10", guide="colorbar") + theme_bw() + labs(fill="No. bills" ,title = "", x="", y="") + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border=element_blank(), legend.position=c(0.9,0.25)) + coord_map() + theme(legend.text=element_text(colour="black", size=10, face="bold")) + theme(plot.margin=unit(c(0,0,0,0), "cm"))
 #dev.off()
